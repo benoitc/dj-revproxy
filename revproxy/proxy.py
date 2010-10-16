@@ -10,9 +10,6 @@ from django.core.servers.basehttp import is_hop_by_hop
 from django.http import HttpResponse, Http404 
 import restkit
 
-if settings.DEBUG:
-    restkit.set_logging("debug")
-
 from revproxy.util import absolute_uri, header_name, coerce_put_post, \
 rewrite_location
 
@@ -40,23 +37,29 @@ class BodyWrapper(object):
 class RevProxy(object):
 
     def __init__(self, name=None, app_name='revproxy'):
-        REVPROXY_SETTINGS = getattr(settings, "REVPROXY_SETTINGS", [])
-        self.proxied_urls = {}
-        for prefix, base_url in REVPROXY_SETTINGS:
-            if not prefix or not base_url:
-                raise ValueError("REVPROXY_SETTINGS is invalid")
-
-            if base_url.endswith("/"):
-                base_url = base_url[:-1]
-            self.proxied_urls[prefix] = base_url
-
         self.name = name or 'revproxy'
         self.app_name = app_name
+        self._proxied_urls = None
+
+    def get_proxied_urls(self):
+        from django.conf import settings
+        if self._proxied_urls is None:
+            REVPROXY_SETTINGS = getattr(settings, "REVPROXY_SETTINGS", [])
+            self._proxied_urls = {}
+            for prefix, base_url in REVPROXY_SETTINGS:
+                if not prefix or not base_url:
+                    raise ValueError("REVPROXY_SETTINGS is invalid")
+
+                if base_url.endswith("/"):
+                    base_url = base_url[:-1]
+                self._proxied_urls[prefix] = base_url
+        return self._proxied_urls
 
     def get_urls(self):
         from django.conf.urls.defaults import patterns, url, include
         urlpatterns = patterns('')
-        for prefix, base_url in self.proxied_urls.items():
+        proxied_urls = self.get_proxied_urls()
+        for prefix, base_url in proxied_urls.items():
             urlpatterns += patterns('',
                 url(r"^%s(?P<path>.*)$" % prefix, self, {'prefix': prefix}))
         return urlpatterns
@@ -70,8 +73,9 @@ class RevProxy(object):
         headers = {}
         prefix = kwargs.get('prefix')
         path = kwargs.get("path")
+        proxied_urls = self.get_proxied_urls()
 
-        if prefix is None or prefix not in self.proxied_urls:
+        if prefix is None or prefix not in proxied_urls:
             return HttpResponseBadGateway("502 Bad Gateway: base url not found")
 
         if path is None:
@@ -82,7 +86,7 @@ class RevProxy(object):
         if not path.startswith("/"):
             path = "/%s" % path
 
-        base_url = absolute_uri(request, self.proxied_urls.get(prefix))
+        base_url = absolute_uri(request, proxied_urls.get(prefix))
         prefix_path = path and request.path.split(path) or ''
         # build proxied_url
         proxied_url = ""
