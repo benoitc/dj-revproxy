@@ -95,6 +95,10 @@ class RevProxy(object):
         else:
             proxied_url = "%s%s" % (base_url, path)
 
+        qs = request.META.get("QUERY_STRING")
+        if qs is not None and qs:
+            proxied_url = "%s?%s" % (proxied_url, qs)
+
         # fix headers
         headers = {}
         for key, value in request.META.iteritems():
