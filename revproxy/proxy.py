@@ -52,17 +52,16 @@ class RevProxy(object):
         headers = {}
         prefix = kwargs.get('prefix')
         path = kwargs.get("path")
-    
+
         base_url = absolute_uri(request, self.proxied_urls.get(prefix))
         prefix_path = path and request.path.split(path) or ''
-    
         # build proxied_url
         proxied_url = ""
         if not path:
             proxied_url = base_url
         else:
-            proxied_url = "%s/%s" % (base_url, path)
-
+            proxied_url = "%s%s" % (base_url, path)
+        
 
         # fix headers
         headers = {}

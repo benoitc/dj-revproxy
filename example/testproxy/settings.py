@@ -73,6 +73,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'revproxy.middleware.ProxyMiddleware',
 )
 
 ROOT_URLCONF = 'testproxy.urls'
@@ -86,7 +87,8 @@ TEMPLATE_DIRS = (
 
 REVPROXY_SETTINGS = [
     ("_google", "http://google.com"),
-    ("_friendpaste", "http://www.friendpaste.com")
+    ("_friendpaste", "http://www.friendpaste.com"),
+    ("_couchdb", "http://127.0.0.1:5984"),
 ]
 
 INSTALLED_APPS = (
