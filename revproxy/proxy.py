@@ -7,7 +7,7 @@ from __future__ import with_statement
 
 from django.conf import settings
 from django.core.servers.basehttp import is_hop_by_hop
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404 
 import restkit
 
 if settings.DEBUG:
@@ -18,6 +18,24 @@ rewrite_location
 
 # define HTTP connection pool
 REVPROXY_POOL = restkit.SimplePool()
+
+
+class HttpResponseBadGateway(HttpResponse):
+    status_code = 502
+
+class BodyWrapper(object):
+
+    def __init__(self, body):
+        self.body = body
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        ret = self.body.readline()
+        if not ret:
+            raise StopIteration()
+        return ret
 
 class RevProxy(object):
 
@@ -53,6 +71,17 @@ class RevProxy(object):
         prefix = kwargs.get('prefix')
         path = kwargs.get("path")
 
+        if prefix is None or prefix not in self.proxied_urls:
+            return HttpResponseBadGateway("502 Bad Gateway: base url not found")
+
+        if path is None:
+            idx =  request.path.find(prefix)
+            pos = idx + len(prefix) 
+            path = request.path[pos:]
+
+        if not path.startswith("/"):
+            path = "/%s" % path
+
         base_url = absolute_uri(request, self.proxied_urls.get(prefix))
         prefix_path = path and request.path.split(path) or ''
         # build proxied_url
@@ -61,7 +90,6 @@ class RevProxy(object):
             proxied_url = base_url
         else:
             proxied_url = "%s%s" % (base_url, path)
-        
 
         # fix headers
         headers = {}
@@ -95,7 +123,8 @@ class RevProxy(object):
         try:
             resp = restkit.request(proxied_url, method=method,
                     body=request.raw_post_data, headers=headers,
-                    follow_redirect=True, 
+                    follow_redirect=True,
+                    decompress=False,
                     pool_instance=REVPROXY_POOL)
         except restkit.RequestFailed, e:
             msg = getattr(e, 'msg', '')
@@ -107,7 +136,7 @@ class RevProxy(object):
                 return http.HttpResponseBadRequest(msg)
 
         with resp.body_stream() as body:
-            response = HttpResponse(body, status=resp.status_int)
+            response = HttpResponse(BodyWrapper(body), status=resp.status_int)
 
             # fix response headers
             for k, v in resp.headers.items():
@@ -117,8 +146,8 @@ class RevProxy(object):
                 if kl  == "location":
                     response[k] = rewrite_location(request, prefix_path,
                             v)
-                elif kl == "content-encoding":
-                    continue
+                #elif kl == "content-encoding":
+                #    continue
                 else:
                     response[k] = v
             return response

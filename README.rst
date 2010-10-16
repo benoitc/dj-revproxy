@@ -13,6 +13,17 @@ Requirements
 Installation
 ------------
 
+Install from sources::
+
+  $ python setup.py install
+
+Or from Pypi::
+
+  $ easy_install -U dj-revproxy 
+
+Configuration
+-------------
+
 Add `revproxy`  to the list of applications::
 
     INSTALLED_APPS = (
@@ -28,8 +39,8 @@ To configure a proxy add a tupple to the REVPROXY_SETTINGS list::
         ("_couchdb", "http://127.0.0.1:5984"),
     ]
 
-The configure your urls to add revproxy to the list::
-
+The configure your proxied urls automatically do something like this in
+`urls.py`:: 
     from django.conf.urls.defaults import *
 
     import revproxy
@@ -43,4 +54,23 @@ Which will allow you to proxy Google on the url::
 
     http://127.0.0.1:8000/proxy/_google
 
+To add manually proxied urls and choose customs paths, do::
 
+
+    (r'^(?P<path>.*)', "revproxy.site_proxy", {"prefix":
+        "_friendpaste"}),
+
+` <path>` will be the path passed to the proxied location. You can also
+do something like::
+
+    ('^_google(.*)', "revproxy.site_proxy", {"prefix": "_google"}),
+
+or even::
+
+    ('^(?P<prefix>[^\/]*)(.*)', "revproxy.site_proxy"),
+
+which will allows you to proxy::
+
+    http://127.0.0.1:8000/proxy/_google
+
+Or any proxy registered.
