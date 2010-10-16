@@ -17,7 +17,7 @@ from revproxy import __version__
 setup(
     name = 'dj-revproxy',
     version = __version__,
-    description = 'Django reverse proxt',
+    description = 'Django reverse proxy',
     long_description = file(
         os.path.join(
             os.path.dirname(__file__),
