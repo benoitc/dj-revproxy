@@ -1,7 +1,7 @@
 dj-revproxy
 -----------
 
-Django reverse proxy. Allows you to proxy any wabsite behind a prefix.
+Django reverse proxy. Allows you to proxy any website behind a prefix.
 
 Requirements
 ------------

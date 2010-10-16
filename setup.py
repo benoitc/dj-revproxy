@@ -29,7 +29,7 @@ setup(
     license = 'BSD',
     url = 'http://github.com/benoitc/dj-revproxy',
     classifiers = [
-        'License :: OSI Approved :: MIT',
+        'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Development Status :: 4 - Beta',
