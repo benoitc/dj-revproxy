@@ -76,7 +76,7 @@ To configure a proxy add a tupple to the REVPROXY_SETTINGS list::
         ("_couchdb", "http://127.0.0.1:5984"),
     ]
 
-The configure your proxied urls automatically do something like this in
+Then configure your proxied urls automatically do something like this in
 ``urls.py``:: 
     from django.conf.urls.defaults import *
 
