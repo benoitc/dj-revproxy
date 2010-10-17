@@ -45,7 +45,7 @@ You can use ``proxy_request`` function to proxy any url. You can use it in your 
     proxy_request(request, "http://example.com")
 
 This code will proxy current request to ``http://example.com`` domain.
-This function can take 4 parameters:
+This function can take 5 parameters:
 
 - destination: string, the proxied url. Required
 - path: string, If no path is given it will try to detect the url using
