@@ -86,6 +86,7 @@ TEMPLATE_DIRS = (
 
 REVPROXY_SETTINGS = [
     ("_google", "http://google.com"),
+    ("_gunicorn", "http://gunicorn.org"),
     ("_friendpaste", "http://www.friendpaste.com"),
     ("_couchdb", "http://127.0.0.1:5984"),
 ]

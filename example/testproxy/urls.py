@@ -4,7 +4,11 @@ import revproxy
 
 urlpatterns = patterns('',
     (r'^proxy/', include(revproxy.site_proxy.urls)),
-    (r'^(?P<path>.*)', "revproxy.site_proxy", {"prefix":
-        "_friendpaste"}),
-    
+    (r'^gunicorn(?P<path>.*)', "revproxy.proxy_request", {
+        "destination": "http://gunicorn.org"
+    }),
+    (r'(?P<path>.*)', "revproxy.proxy_request", {
+        "destination": "http://friendpaste.com"
+    })
+
 )

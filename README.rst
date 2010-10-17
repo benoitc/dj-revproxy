@@ -31,6 +31,43 @@ Add `revproxy`  to the list of applications::
         'revproxy'
     )
 
+Usage
+-----
+
+Since 0.2, there is 2 ways to use dj-revproxy.
+
+
+1. Generic view
++++++++++++++++
+
+You can use ``proxy_request`` function to proxy any url. You can use it in your code::
+
+    proxy_request(request, "http://example.com")
+
+This code will proxy current request to ``http://example.com`` domain.
+This function can take 4 parameters:
+
+- destination: string, the proxied url. Required
+- path: string, If no path is given it will try to detect the url using
+  the prefix if it's given. If not full request.path will be used in
+  finl destination url.
+- prefix: string, the prrefix behind we proxy the path
+  headers: dict, custom HTTP headers
+- no_redirect: boolean, False by default, do not redirect to "/" 
+  if no path is given
+- decompress: boolean, False by default. If true the proxy will
+  decompress the source body if it's gzip encoded.
+
+It return an instance of ``django.http.HttpResponse``. You can use it  directly
+in your urls.py (which is the eaiest way to use). Ex::
+
+    (r'^gunicorn(?P<path>.*)', "revproxy.proxy_request", {
+        "destination": "http://gunicorn.org"
+    }),
+
+2. Configure multiple proxy behind one generic prefix
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 To configure a proxy add a tupple to the REVPROXY_SETTINGS list::
 
     REVPROXY_SETTINGS = [
@@ -40,7 +77,7 @@ To configure a proxy add a tupple to the REVPROXY_SETTINGS list::
     ]
 
 The configure your proxied urls automatically do something like this in
-`urls.py`:: 
+``urls.py``:: 
     from django.conf.urls.defaults import *
 
     import revproxy
@@ -54,23 +91,7 @@ Which will allow you to proxy Google on the url::
 
     http://127.0.0.1:8000/proxy/_google
 
-To add manually proxied urls and choose customs paths, do::
-
-
-    (r'^(?P<path>.*)', "revproxy.site_proxy", {"prefix":
-        "_friendpaste"}),
-
-` <path>` will be the path passed to the proxied location. You can also
-do something like::
-
-    ('^_google(.*)', "revproxy.site_proxy", {"prefix": "_google"}),
-
 or even::
 
-    ('^(?P<prefix>[^\/]*)(.*)', "revproxy.site_proxy"),
+    ('^proxy/(?P<prefix>[^\/]*)(.*)', "revproxy.site_proxy"),
 
-which will allows you to proxy::
-
-    http://127.0.0.1:8000/proxy/_google
-
-Or any proxy registered.
