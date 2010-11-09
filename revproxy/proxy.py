@@ -5,7 +5,6 @@
 
 from __future__ import with_statement
 
-from django.conf import settings
 from django.core.servers.basehttp import is_hop_by_hop
 from django.http import HttpResponse, Http404, HttpResponsePermanentRedirect
 import restkit
