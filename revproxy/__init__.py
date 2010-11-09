@@ -6,4 +6,9 @@
 version_info = (0, 2, 0)
 __version__ =  ".".join(map(str, version_info))
 
-from revproxy.proxy import proxy_request, RevProxy, site_proxy
+try:
+    from revproxy.proxy import proxy_request, RevProxy, site_proxy
+except ImportError:
+    import traceback
+    traceback.print_exc()
+    

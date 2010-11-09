@@ -47,7 +47,7 @@ setup(
     
     install_requires = [
         'setuptools',
-        'django',
+        'Django',
         'restkit>=2.2.0'
     ],
     
