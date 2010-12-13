@@ -48,7 +48,7 @@ setup(
     install_requires = [
         'setuptools',
         'Django',
-        'restkit>=2.2.0'
+        'restkit>=2.3.1'
     ],
     
     test_suite = 'nose.collector',

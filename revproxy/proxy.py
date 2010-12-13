@@ -12,15 +12,6 @@ import restkit
 from revproxy.util import absolute_uri, header_name, coerce_put_post, \
 rewrite_location
 
-# define HTTP connection pool
-_pool = None
-
-def get_pool():
-    global _pool
-    if _pool is None:
-        _pool = restkit.SimplePool()
-    return _pool
-
 
 class HttpResponseBadGateway(HttpResponse):
     status_code = 502
@@ -120,8 +111,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
         resp = restkit.request(proxied_url, method=method,
                 body=request.raw_post_data, headers=headers,
                 follow_redirect=True,
-                decompress=decompress,
-                pool_instance=get_pool())
+                decompress=decompress)
     except restkit.RequestFailed, e:
         msg = getattr(e, 'msg', '')
     
