@@ -4,6 +4,7 @@
 # See the NOTICE for more information.
 
 from __future__ import with_statement
+import uuid
 
 from django.core.servers.basehttp import is_hop_by_hop
 from django.http import HttpResponse, Http404, HttpResponsePermanentRedirect
@@ -100,6 +101,9 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
 
     # we forward for
     headers["X-Forwarded-For"] = request.get_host()
+
+    # used in request session store.
+    headers["X-Restkit-Reqid"] = uuid.uuid4().hex
 
     # django doesn't understand PUT sadly
     method = request.method.upper()
