@@ -51,22 +51,18 @@ def coerce_put_post(request):
         request.PUT = request.POST
 
 def rewrite_location(request, prefix_path, location):
+    prefix_path = prefix_path or ''
     url = urlparse(location)
-    source = url.parse(request.get_host)
+    scheme = request.is_secure() and 'https' or 'http'
 
     if not absolute_http_url_re.match(location):
         # remote server doesn't follow rfc2616
-        proxy_uri = '%s://%s%s' % (
-                request.is_secure() and 'https' or 'http',
+        proxy_uri = '%s://%s%s' % (scheme,
                 request.get_host(), prefix_path)
-
         return  urljoin(proxy_uri, location)
-    
-    elif url.scheme != source.scheme or url.netloc != source.netloc:
-        url.path = prefix_path + url.path
-        return urlunparse((source.scheme, source.netloc,
-            prefix_path+url.path, url.params, url.query, url.fragment))
-
+    elif url.scheme != scheme or url.netloc != request.get_host():
+        return urlunparse((scheme, request.get_host(), 
+            prefix_path + url.path, url.params, url.query, url.fragment))
     return location
 
 def import_conn_manager(module):

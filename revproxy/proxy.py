@@ -164,6 +164,8 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
                 continue
             if kl  == "location":
                 response[k] = rewrite_location(request, prefix, v)
+                print v
+                print response[k]
             else:
                 response[k] = v
         return response
