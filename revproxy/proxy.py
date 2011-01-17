@@ -6,6 +6,7 @@
 from __future__ import with_statement
 import uuid
 
+from django.views.decorators.csrf import csrf_exempt
 from django.core.servers.basehttp import is_hop_by_hop
 from django.http import HttpResponse, Http404, HttpResponsePermanentRedirect
 import restkit
@@ -56,7 +57,7 @@ class BodyWrapper(object):
             raise StopIteration()
         return ret
 
-
+@csrf_exempt
 def proxy_request(request, destination=None, prefix=None, headers=None,
         no_redirect=False, decompress=False, **kwargs):
     """ generic view to proxy a request.
