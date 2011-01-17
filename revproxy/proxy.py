@@ -6,6 +6,7 @@
 from __future__ import with_statement
 import uuid
 
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.core.servers.basehttp import is_hop_by_hop
 from django.http import HttpResponse, Http404, HttpResponsePermanentRedirect
@@ -16,9 +17,6 @@ rewrite_location, import_conn_manager
 
 _conn_manager = None
 def set_conn_manager():
-    from django.conf import settings
-    from django.utils.importlib import import_module
-
     global _conn_manager
 
     nb_connections = getattr(settings, 'REVPROXY_NB_CONNECTIONS', 10)
@@ -195,7 +193,6 @@ class RevProxy(object):
         self._proxied_urls = None
 
     def get_proxied_urls(self):
-        from django.conf import settings
         if self._proxied_urls is None:
             REVPROXY_SETTINGS = getattr(settings, "REVPROXY_SETTINGS", [])
             self._proxied_urls = {}
