@@ -84,6 +84,8 @@ TEMPLATE_DIRS = (
 )
 
 
+#REVPROXY_CONN_MGR = "restkit.conn.gevent_manager:GeventConnectionManager"
+
 REVPROXY_SETTINGS = [
     ("_google", "http://google.com"),
     ("_gunicorn", "http://gunicorn.org"),

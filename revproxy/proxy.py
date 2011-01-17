@@ -11,7 +11,32 @@ from django.http import HttpResponse, Http404, HttpResponsePermanentRedirect
 import restkit
 
 from revproxy.util import absolute_uri, header_name, coerce_put_post, \
-rewrite_location
+rewrite_location, import_conn_manager
+
+_conn_manager = None
+def set_conn_manager():
+    from django.conf import settings
+    from django.utils.importlib import import_module
+
+    global _conn_manager
+
+    nb_connections = getattr(settings, 'REVPROXY_NB_CONNECTIONS', 10)
+    timeout = getattr(settings, 'REVPROXY_TIMEOUT', 300)
+
+    
+    conn_manager_uri = getattr(settings, 'REVPROXY_CONN_MGR', None)
+    if not conn_manager_uri:
+        from restkit.conn.threaded import TConnectionManager
+        klass = TConnectionManager
+    else:
+        klass = import_conn_manager(conn_manager_uri)
+    _conn_manager = klass(timeout=timeout, nb_connections=nb_connections)
+
+def get_conn_manager():
+    global _conn_manager
+    if not _conn_manager:
+        set_conn_manager()
+    return _conn_manager
 
 
 class HttpResponseBadGateway(HttpResponse):
@@ -111,11 +136,14 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
         coerce_put_post(request)
 
     # do the request
+
+
     try:
         resp = restkit.request(proxied_url, method=method,
                 body=request.raw_post_data, headers=headers,
                 follow_redirect=True,
-                decompress=decompress)
+                decompress=decompress,
+                conn_manager=get_conn_manager())
     except restkit.RequestFailed, e:
         msg = getattr(e, 'msg', '')
     
