@@ -8,7 +8,7 @@ Requirements
 
 - `Python <http://www.python.org>`_ 2.x superior to 2.5 and Django
 - `Django <http://www.djangoproject.org>`_  >= 1.2
-- `restkit <http://www.couchdbkit.org>`_ >= 2.1.2
+- `restkit <http://benoitc.github.com/restkit>`_ >= 2.3.2
 
 Installation
 ------------
@@ -61,7 +61,7 @@ This function can take 5 parameters:
 It return an instance of ``django.http.HttpResponse``. You can use it  directly
 in your urls.py (which is the eaiest way to use). Ex::
 
-    (r'^gunicorn(?P<path>.*)', "revproxy.proxy_request", {
+    (r'^gunicorn(?P<path>.*)', "revproxy.proxy.proxy_request", {
         "destination": "http://gunicorn.org"
     }),
 
@@ -80,11 +80,11 @@ Then configure your proxied urls automatically do something like this in
 ``urls.py``:: 
     from django.conf.urls.defaults import *
 
-    import revproxy
+    import revproxy.proxy
 
     urlpatterns = patterns('',
         ...
-        (r'^proxy/', include(revproxy.site_proxy.urls)),
+        (r'^proxy/', include(proxy.site_proxy.urls)),
     )
 
 Which will allow you to proxy Google on the url::
@@ -93,5 +93,5 @@ Which will allow you to proxy Google on the url::
 
 or even::
 
-    ('^proxy/(?P<prefix>[^\/]*)(.*)', "revproxy.site_proxy"),
+    ('^proxy/(?P<prefix>[^\/]*)(.*)', "proxy.site_proxy"),
 

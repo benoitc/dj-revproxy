@@ -1,13 +1,13 @@
 from django.conf.urls.defaults import *
 
-import revproxy
+from revproxy import proxy
 
 urlpatterns = patterns('',
-    (r'^proxy/', include(revproxy.site_proxy.urls)),
-    (r'^gunicorn(?P<path>.*)', "revproxy.proxy_request", {
+    (r'^proxy/', include(proxy.site_proxy.urls)),
+    (r'^gunicorn(?P<path>.*)', "revproxy.proxy.proxy_request", {
         "destination": "http://gunicorn.org"
     }),
-    (r'(?P<path>.*)', "revproxy.proxy_request", {
+    (r'(?P<path>.*)', "revproxy.proxy.proxy_request", {
         "destination": "http://friendpaste.com"
     })
 

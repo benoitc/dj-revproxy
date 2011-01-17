@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of dj-hproxy released under the Apache 2 license. 
+# This file is part of dj-revproxy released under the Apache 2 license. 
 # See the NOTICE for more information.
 
 import os
 import sys
 
 if not hasattr(sys, 'version_info') or sys.version_info < (2, 5, 0, 'final'):
-    raise SystemExit("Compono requires Python 2.5 or later.")
+    raise SystemExit("dj-revproxy requires Python 2.5 or later.")
 
 from setuptools import setup, find_packages
 from revproxy import __version__
@@ -46,11 +46,6 @@ setup(
     include_package_data = True,
     
     install_requires = [
-        'setuptools',
-        'Django',
-        'restkit>=2.3.1'
-    ],
-    
-    test_suite = 'nose.collector',
-
+        'restkit>=2.3.2'
+    ]
 )
