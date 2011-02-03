@@ -11,6 +11,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.servers.basehttp import is_hop_by_hop
 from django.http import HttpResponse, Http404, HttpResponsePermanentRedirect
 import restkit
+from restkit.globals import set_manager
+from restkit.manager import Manager
+
+
+restkit.set_logging("debug")
 
 from revproxy.util import absolute_uri, header_name, coerce_put_post, \
 rewrite_location, import_conn_manager
@@ -20,16 +25,16 @@ def set_conn_manager():
     global _conn_manager
 
     nb_connections = getattr(settings, 'REVPROXY_NB_CONNECTIONS', 10)
-    timeout = getattr(settings, 'REVPROXY_TIMEOUT', 300)
+    timeout = getattr(settings, 'REVPROXY_TIMEOUT', 150)
 
     
     conn_manager_uri = getattr(settings, 'REVPROXY_CONN_MGR', None)
     if not conn_manager_uri:
-        from restkit.conn.threaded import TConnectionManager
-        klass = TConnectionManager
+        
+        klass = Manager
     else:
         klass = import_conn_manager(conn_manager_uri)
-    _conn_manager = klass(timeout=timeout, nb_connections=nb_connections)
+    _conn_manager = klass(max_conn=nb_connections, timeout=timeout)
 
 def get_conn_manager():
     global _conn_manager
@@ -41,23 +46,11 @@ def get_conn_manager():
 class HttpResponseBadGateway(HttpResponse):
     status_code = 502
 
-class BodyWrapper(object):
 
-    def __init__(self, body):
-        self.body = body
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        ret = self.body.read(1024)
-        if not ret:
-            raise StopIteration()
-        return ret
 
 @csrf_exempt
 def proxy_request(request, destination=None, prefix=None, headers=None,
-        no_redirect=False, decompress=False, **kwargs):
+        no_redirect=False, decompress=True, **kwargs):
     """ generic view to proxy a request.
 
     Args:
@@ -129,6 +122,8 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     # used in request session store.
     headers["X-Restkit-Reqid"] = uuid.uuid4().hex
 
+    del headers['Accept-Encoding']
+
     # django doesn't understand PUT sadly
     method = request.method.upper()
     if method == "PUT":
@@ -141,8 +136,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
         resp = restkit.request(proxied_url, method=method,
                 body=request.raw_post_data, headers=headers,
                 follow_redirect=True,
-                decompress=decompress,
-                conn_manager=get_conn_manager())
+                decompress=decompress)
     except restkit.RequestFailed, e:
         msg = getattr(e, 'msg', '')
     
@@ -152,8 +146,10 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
         else:
             return http.HttpResponseBadRequest(msg)
 
+    print type(resp._body)
+
     with resp.body_stream() as body:
-        response = HttpResponse(BodyWrapper(body), status=resp.status_int)
+        response = HttpResponse(body, status=resp.status_int)
 
         # fix response headers
         for k, v in resp.headers.items():
@@ -166,6 +162,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
                 print response[k]
             else:
                 response[k] = v
+
         return response
 
 

@@ -60,7 +60,7 @@ def rewrite_location(request, prefix_path, location):
         proxy_uri = '%s://%s%s' % (scheme,
                 request.get_host(), prefix_path)
         return  urljoin(proxy_uri, location)
-    elif url.scheme != scheme or url.netloc != request.get_host():
+    elif url.scheme == scheme or url.netloc == request.get_host():
         return urlunparse((scheme, request.get_host(), 
             prefix_path + url.path, url.params, url.query, url.fragment))
     return location
