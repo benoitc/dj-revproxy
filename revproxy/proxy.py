@@ -50,7 +50,7 @@ class HttpResponseBadGateway(HttpResponse):
 
 @csrf_exempt
 def proxy_request(request, destination=None, prefix=None, headers=None,
-        no_redirect=False, decompress=True, **kwargs):
+        no_redirect=False, decompress=False, **kwargs):
     """ generic view to proxy a request.
 
     Args:
@@ -122,7 +122,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     # used in request session store.
     headers["X-Restkit-Reqid"] = uuid.uuid4().hex
 
-    del headers['Accept-Encoding']
+    #del headers['Accept-Encoding']
 
     # django doesn't understand PUT sadly
     method = request.method.upper()
