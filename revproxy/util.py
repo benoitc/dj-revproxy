@@ -5,6 +5,7 @@
 
 import sys
 
+import posixpath
 from urlparse import urljoin, urlparse, urlunparse
 from django.http import absolute_http_url_re
 
@@ -17,6 +18,12 @@ def absolute_uri(request, base_url):
                 request.is_secure() and 'https' or 'http', 
                 request.get_host(), base_url)
     return base_url
+
+def normalize(base, url):
+    parsed_url = urlparse(urljoin(base,url))
+    path = posixpath.normpath(parsed_url[2])
+    return urlunparse((parsed_url.scheme, parsed_url.netloc,
+            path, parsed_url.params, parsed_url.query, parsed_url.fragment))
 
 def header_name(name):
     """Convert header name like HTTP_XXXX_XXX to Xxxx-Xxx:"""
@@ -83,6 +90,3 @@ def import_conn_manager(module):
     if mgr is None:
         raise ImportError("Failed to find manager object: %r" % mgr)
     return mgr
-
-
-

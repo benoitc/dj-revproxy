@@ -17,8 +17,9 @@ from restkit.manager import Manager
 
 restkit.set_logging("debug")
 
-from revproxy.util import absolute_uri, header_name, coerce_put_post, \
-rewrite_location, import_conn_manager
+from .util import absolute_uri, header_name, coerce_put_post, \
+rewrite_location, import_conn_manager, absolute_uri
+from .filters import RewriteBase
 
 _conn_manager = None
 def set_conn_manager():
@@ -50,7 +51,7 @@ class HttpResponseBadGateway(HttpResponse):
 
 @csrf_exempt
 def proxy_request(request, destination=None, prefix=None, headers=None,
-        no_redirect=False, decompress=False, **kwargs):
+        no_redirect=False, decompress=False, rewrite_base=False, **kwargs):
     """ generic view to proxy a request.
 
     Args:
@@ -100,7 +101,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     if qs is not None and qs:
         proxied_url = "%s?%s" % (proxied_url, qs)
 
-    # fix headers
+    # fix headers@
     headers = headers or {}
     for key, value in request.META.iteritems():
         if key.startswith('HTTP_'):
@@ -129,14 +130,19 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     if method == "PUT":
         coerce_put_post(request)
 
-    # do the request
+    filters = None
+    if rewrite_base:
+        decompress = True
+        filters=[RewriteBase(request)]
 
+    # do the request
 
     try:
         resp = restkit.request(proxied_url, method=method,
                 body=request.raw_post_data, headers=headers,
                 follow_redirect=True,
-                decompress=decompress)
+                decompress=decompress,
+                filters=filters)
     except restkit.RequestFailed, e:
         msg = getattr(e, 'msg', '')
     
@@ -145,8 +151,6 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
             body = msg
         else:
             return http.HttpResponseBadRequest(msg)
-
-    print type(resp._body)
 
     with resp.body_stream() as body:
         response = HttpResponse(body, status=resp.status_int)
@@ -158,8 +162,9 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
                 continue
             if kl  == "location":
                 response[k] = rewrite_location(request, prefix, v)
-                print v
-                print response[k]
+            if kl == "content-encoding":
+                if not decompress:
+                    response[k] = v
             else:
                 response[k] = v
 
