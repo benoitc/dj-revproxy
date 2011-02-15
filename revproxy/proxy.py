@@ -152,23 +152,23 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
         else:
             return http.HttpResponseBadRequest(msg)
 
-    with resp.body_stream() as body:
-        response = HttpResponse(body, status=resp.status_int)
+    body =  resp.tee()
+    response = HttpResponse(body, status=resp.status_int)
 
-        # fix response headers
-        for k, v in resp.headers.items():
-            kl = k.lower()
-            if is_hop_by_hop(kl):
-                continue
-            if kl  == "location":
-                response[k] = rewrite_location(request, prefix, v)
-            if kl == "content-encoding":
-                if not decompress:
-                    response[k] = v
-            else:
+    # fix response headers
+    for k, v in resp.headers.items():
+        kl = k.lower()
+        if is_hop_by_hop(kl):
+            continue
+        if kl  == "location":
+            response[k] = rewrite_location(request, prefix, v)
+        if kl == "content-encoding":
+            if not decompress:
                 response[k] = v
+        else:
+            response[k] = v
 
-        return response
+    return response
 
 
 class ProxyTarget(object):
