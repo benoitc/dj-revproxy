@@ -54,7 +54,7 @@ class RewriteBase(object):
             return normalize(absolute_path, link) 
         return link
 
-    def on_response(self, client, resp):
+    def on_response(self, resp, req):
         ctype = resp.headers.iget('content-type')
         if not ctype:
             return
