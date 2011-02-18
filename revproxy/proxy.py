@@ -155,6 +155,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     body =  resp.tee()
     response = HttpResponse(body, status=resp.status_int)
 
+
     # fix response headers
     for k, v in resp.headers.items():
         kl = k.lower()
@@ -162,7 +163,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
             continue
         if kl  == "location":
             response[k] = rewrite_location(request, prefix, v)
-        if kl == "content-encoding":
+        elif kl == "content-encoding":
             if not decompress:
                 response[k] = v
         else:
