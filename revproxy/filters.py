@@ -80,5 +80,14 @@ class RewriteBase(object):
                 head.append(base)
             
             # modify response
-            resp._body = StringIO(lxml.html.tostring(html))
+            rewritten_body = lxml.html.tostring(html)
+            try:
+                resp.headers.ipop('content-length')
+            except KeyError:
+                pass
+
+            resp.headers['Content-Length'] = str(len(rewritten_body))
+            resp._body = StringIO(rewritten_body)
             resp._already_read = False
+
+
