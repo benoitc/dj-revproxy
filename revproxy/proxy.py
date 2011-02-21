@@ -125,7 +125,6 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     # used in request session store.
     if store:
         request_id = uuid.uuid4().hex
-        print request_id
         store = RequestStore(request_id, 
                 store_path=kwargs.get("store_path"))
         filters = [store]
@@ -142,8 +141,6 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
         else:
             filters.append(RewriteBase(request))
     
-    print filters
-
     # do the request
     try:
         resp = restkit.request(proxied_url, method=method,
