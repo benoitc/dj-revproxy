@@ -1,8 +1,12 @@
+import os
+
 from django.conf.urls.defaults import *
 
 from revproxy import proxy
 
-from revproxy.filters import RewriteBase
+store_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 
+                        "..", "store"))
+print store_path
 
 urlpatterns = patterns('',
     (r'^proxy/', include(proxy.site_proxy.urls)),
@@ -16,7 +20,9 @@ urlpatterns = patterns('',
         "rewrite_base": True,
     }),
     (r'(?P<path>.*)', "revproxy.proxy.proxy_request", {
-        "destination": "http://friendpaste.com"
+        "destination": "http://friendpaste.com",
+        "store": True,
+        "store_path": store_path
     })
 
 )

@@ -20,6 +20,7 @@ restkit.set_logging("debug")
 from .util import absolute_uri, header_name, coerce_put_post, \
 rewrite_location, import_conn_manager, absolute_uri
 from .filters import RewriteBase
+from .store import RequestStore
 
 _conn_manager = None
 def set_conn_manager():
@@ -51,7 +52,8 @@ class HttpResponseBadGateway(HttpResponse):
 
 @csrf_exempt
 def proxy_request(request, destination=None, prefix=None, headers=None,
-        no_redirect=False, decompress=False, rewrite_base=False, **kwargs):
+        no_redirect=False, decompress=False, rewrite_base=False,
+        store=False, **kwargs):
     """ generic view to proxy a request.
 
     Args:
@@ -68,7 +70,7 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
 
         HttpResponse instance
     """
-
+    filters = None
     path = kwargs.get("path")
 
     if path is None:
@@ -121,22 +123,28 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     headers["X-Forwarded-For"] = request.get_host()
 
     # used in request session store.
-    headers["X-Restkit-Reqid"] = uuid.uuid4().hex
-
-    #del headers['Accept-Encoding']
+    if store:
+        request_id = uuid.uuid4().hex
+        print request_id
+        store = RequestStore(request_id, 
+                store_path=kwargs.get("store_path"))
+        filters = [store]
 
     # django doesn't understand PUT sadly
     method = request.method.upper()
     if method == "PUT":
         coerce_put_post(request)
-
-    filters = None
+    
     if rewrite_base:
         decompress = True
-        filters=[RewriteBase(request)]
+        if filters is None:
+            filters=[RewriteBase(request)]
+        else:
+            filters.append(RewriteBase(request))
+    
+    print filters
 
     # do the request
-
     try:
         resp = restkit.request(proxied_url, method=method,
                 body=request.raw_post_data, headers=headers,
