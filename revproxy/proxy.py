@@ -49,7 +49,6 @@ class HttpResponseBadGateway(HttpResponse):
     status_code = 502
 
 
-
 @csrf_exempt
 def proxy_request(request, **kwargs):
     """ generic view to proxy a request.
@@ -70,18 +69,29 @@ def proxy_request(request, **kwargs):
         HttpResponse instance
     """
     
-    # get filters and eventually update kwargs.
+    # install request filters
     filters_classes = kwargs.get('filters')
-    filters = None
-    if filters_classes is not None:
+    if not filters_classes:
+        filters = None 
+    else:
         filters = []
         for fclass in filters_classes:
+            # add filter instance
             fobj = fclass(request, **kwargs)
             filters.append(fobj)
+
+            # eventually rewrite request and kwargs
             if hasattr(fobj, 'setup'):
-                extra_kwargs = fobj.setup()
-                if extra_kwargs is not None:
-                    kwargs.update(extra_kwargs)
+                ret = fobj.setup()
+                if ret is not None:
+                    try:
+                        request, extra_kwargs = ret
+                    except ValueError:
+                        extra_kwargs = ret
+
+                    if extra_kwargs is not None:
+                        kwargs.update(extra_kwargs)
+    
 
     destination = kwargs.get('destination')
     prefix = kwargs.get('prefix')
