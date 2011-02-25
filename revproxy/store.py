@@ -10,10 +10,13 @@ try:
 except ImportError:
     from StringIO import StringIO
 
+from django.conf import settings
 from restkit.tee import TeeInput, ResponseTeeInput
 from restkit.client import USER_AGENT
 
 from .filters import Filter
+from .models import RequestSession
+
 
 class RequestBodyWrapper(TeeInput):
 
@@ -57,7 +60,8 @@ class ResponseBodyWrapper(ResponseTeeInput):
 class RequestStore(Filter):
 
     def __init__(self, request, **kwargs):
-                
+
+        proxy_sid = kwargs.get("proxy_sid")       
         store_path = kwargs.get("store_path", "/tmp")
         request_id = uuid.uuid4().hex
 
@@ -69,8 +73,15 @@ class RequestStore(Filter):
         
         self.freq = None
         self.frep = None
-        super(RequestStore, self).__init__(request, **kwargs)
 
+        # save session
+        session = RequestSession(
+                sid = proxy_sid,
+                request_id = request_id,
+                store_path = store_path)
+        session.save()
+
+        super(RequestStore, self).__init__(request, **kwargs)
 
     def on_request(self, request):
         self.freq = open("%s.req" % self.fprefix, "w+")

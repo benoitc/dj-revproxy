@@ -8,3 +8,4 @@ dj_revproxy.egg-info/
 dist
 build
 example/store
+example/testproxy/testproxy.db

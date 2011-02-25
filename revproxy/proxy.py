@@ -68,6 +68,22 @@ def proxy_request(request, **kwargs):
 
         HttpResponse instance
     """
+
+    # proxy sid
+    try:
+        cookie_name = settings.REVPROXY_COOKIE
+    except AttributeError:
+        cookie_name = kwargs.get("cookie", "PROXY_SID")
+
+    sid = request.COOKIES.get(cookie_name)
+
+    # create a proxy session id only if it's needed so someone using
+    # a cookie based authentification can just reuse this session id.
+    # It can also be the session id from the session middleware.
+    if not sid:
+        sid = uuid.uuid4().hex
+    kwargs['proxy_sid'] = sid
+
     
     # install request filters
     filters_classes = kwargs.get('filters')
@@ -99,6 +115,7 @@ def proxy_request(request, **kwargs):
     no_redirect = kwargs.get('no_redirect', False)
     decompress = kwargs.get("decompress", False)
     path = kwargs.get("path")
+    proxy_sid = kwargs.get('proxy_sid')
 
     if path is None:
         path = request.path
@@ -186,6 +203,16 @@ def proxy_request(request, **kwargs):
                 response[k] = v
         else:
             response[k] = v
+    
+    # save the session 
+    response.set_cookie(
+            cookie_name, 
+            sid,
+            max_age=None,
+            expires=None,
+            domain=settings.SESSION_COOKIE_DOMAIN,
+            path=settings.SESSION_COOKIE_PATH,
+            secure=True)
 
     return response
 
