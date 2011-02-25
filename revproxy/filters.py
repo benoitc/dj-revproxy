@@ -32,16 +32,31 @@ HTML_CTYPES = (
 )
 
 
+class Filter(object):
+    """ Filter Interface """
 
-class RewriteBase(object):
-
-    def __init__(self, request):
+    def __init__(self, request, **kwargs):
         self.request = request
-        self.absolute_path = '%s://%s%s' %  (
-                self.request.is_secure() and 'https' or 'http', 
-                self.request.get_host(), 
-                self.request.path)
+        self.kwargs = kwargs
 
+    def setup(self):
+        """ used to update request options. Return None or a dict
+        instance"""
+        return None
+
+
+class RewriteBase(Filter):
+
+    def __init__(self, request, **kwargs):
+        self.absolute_path = '%s://%s%s' %  (
+                request.is_secure() and 'https' or 'http', 
+                request.get_host(), 
+                request.path)
+        super(RewriteBase, self).__init__(request, **kwargs)
+
+    def setup(self):
+        return {'decompress': True}
+        
     def rewrite_link(self, link):
         if not absolute_http_url_re.match(link):
             if link.startswith("/"):

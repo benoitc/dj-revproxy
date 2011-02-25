@@ -4,6 +4,7 @@
 # See the NOTICE for more information.
 import os
 import types
+import uuid
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -11,6 +12,8 @@ except ImportError:
 
 from restkit.tee import TeeInput, ResponseTeeInput
 from restkit.client import USER_AGENT
+
+from .filters import Filter
 
 class RequestBodyWrapper(TeeInput):
 
@@ -51,9 +54,13 @@ class ResponseBodyWrapper(ResponseTeeInput):
         self.fobject.close()
         return super(ResponseBodyWrapper, self)._finalize()
 
-class RequestStore(object):
+class RequestStore(Filter):
 
-    def __init__(self, request_id, store_path="/tmp"):
+    def __init__(self, request, **kwargs):
+                
+        store_path = kwargs.get("store_path", "/tmp")
+        request_id = uuid.uuid4().hex
+
         dirs = os.path.join(*request_id[0:8])
         fdir = os.path.join(store_path, dirs)
         self.fprefix = os.path.join(fdir, request_id[8:])
@@ -62,6 +69,8 @@ class RequestStore(object):
         
         self.freq = None
         self.frep = None
+        super(RequestStore, self).__init__(request, **kwargs)
+
 
     def on_request(self, request):
         self.freq = open("%s.req" % self.fprefix, "w+")

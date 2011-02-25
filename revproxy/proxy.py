@@ -51,9 +51,7 @@ class HttpResponseBadGateway(HttpResponse):
 
 
 @csrf_exempt
-def proxy_request(request, destination=None, prefix=None, headers=None,
-        no_redirect=False, decompress=False, rewrite_base=False,
-        store=False, **kwargs):
+def proxy_request(request, **kwargs):
     """ generic view to proxy a request.
 
     Args:
@@ -65,12 +63,31 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
             if no path is given
         decompress: boolean, False by default. If true the proxy will
             decompress the source body if it's gzip encoded.
+        filters: list of revproxy.Filter instance
 
     Return:
 
         HttpResponse instance
     """
+    
+    # get filters and eventually update kwargs.
+    filters_classes = kwargs.get('filters')
     filters = None
+    if filters_classes is not None:
+        filters = []
+        for fclass in filters_classes:
+            fobj = fclass(request, **kwargs)
+            filters.append(fobj)
+            if hasattr(fobj, 'setup'):
+                extra_kwargs = fobj.setup()
+                if extra_kwargs is not None:
+                    kwargs.update(extra_kwargs)
+
+    destination = kwargs.get('destination')
+    prefix = kwargs.get('prefix')
+    headers = kwargs.get('headers')
+    no_redirect = kwargs.get('no_redirect', False)
+    decompress = kwargs.get("decompress", False)
     path = kwargs.get("path")
 
     if path is None:
@@ -122,25 +139,11 @@ def proxy_request(request, destination=None, prefix=None, headers=None,
     # we forward for
     headers["X-Forwarded-For"] = request.get_host()
 
-    # used in request session store.
-    if store:
-        request_id = uuid.uuid4().hex
-        store = RequestStore(request_id, 
-                store_path=kwargs.get("store_path"))
-        filters = [store]
-
     # django doesn't understand PUT sadly
     method = request.method.upper()
     if method == "PUT":
         coerce_put_post(request)
-    
-    if rewrite_base:
-        decompress = True
-        if filters is None:
-            filters=[RewriteBase(request)]
-        else:
-            filters.append(RewriteBase(request))
-    
+       
     # do the request
     try:
         resp = restkit.request(proxied_url, method=method,
