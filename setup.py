@@ -46,6 +46,6 @@ setup(
     include_package_data = True,
     
     install_requires = [
-        'restkit>=2.3.2'
+        'restkit>=3.2'
     ]
 )
