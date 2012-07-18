@@ -8,12 +8,21 @@ import uuid
 
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.core.servers.basehttp import is_hop_by_hop
 from django.http import HttpResponse, Http404, HttpResponsePermanentRedirect
 import restkit
 from restkit.globals import set_manager
 from restkit.manager import Manager
 
+      	
+_hop_headers = {
+    'connection':1, 'keep-alive':1, 'proxy-authenticate':1,
+    'proxy-authorization':1, 'te':1, 'trailers':1, 'transfer-encoding':1,
+    'upgrade':1
+}
+
+def is_hop_by_hop(header_name):
+    """Return true if 'header_name' is an HTTP/1.1 "Hop-by-Hop" header"""
+    return header_name.lower() in _hop_headers
 
 restkit.set_logging("debug")
 
