@@ -1,3 +1,11 @@
+
+**Status: UNMAINTAINED**
+
+Contact me if you want to take the lead.
+
+
+
+
 dj-revproxy
 -----------
 
